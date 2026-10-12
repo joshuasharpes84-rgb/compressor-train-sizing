@@ -1,0 +1,52 @@
+CEPCI (Chemical Engineering Plant Cost Index) - Annual Averages
+Source: Chemical Engineering magazine (chemengonline.com/pci-home), as compiled at
+toweringskills.com/financial-analysis/cost-indices/. Baseline: 1957-1959 = 100.0
+
+Year    CEPCI
+2001    394.3   (your capital_cost_estimation.py currently has 397.0 for this year - minor
+                 source discrepancy, likely a later index revision; worth reconciling)
+2002    395.6
+2003    402.0
+2004    444.2
+2005    468.2
+2006    499.6
+2007    525.4
+2008    575.4
+2009    521.9
+2010    550.8
+2011    585.7
+2012    584.6
+2013    567.3
+2014    576.1
+2015    556.8
+2016    541.7
+2017    567.5
+2018    603.1
+2019    607.5
+2020    596.2
+2021    708.8
+2022    816.0
+2023    797.9
+2024    795.4   (Jan 2024 monthly; 2024 annual average not yet finalized in source)
+
+Monthly reference points cited elsewhere in this project's textbook excerpts:
+Jan. 2002    390.4   (Peters, Timmerhaus & West cost-figure basis, Ch.12 Figs. 12-28/29/30)
+2013 average 567.3   (Seider et al. cost-figure basis, Ch.16 Figs. 16.7/16.8/16.9/16.10)
+
+Escalation formula (move a cost from one year to another):
+
+    C2 = C1 * (I2 / I1)
+
+    C1 = known cost at year/index basis 1
+    I1 = CEPCI value at year/index basis 1 (the year C1 is quoted in)
+    I2 = CEPCI value at year/index basis 2 (the year you want the cost expressed in)
+    C2 = resulting cost, escalated to year/index basis 2
+
+Notes:
+- Only escalate a few years at a time; the index's underlying cost-component weighting
+  drifts over long spans, so accuracy degrades the further apart I1 and I2 are.
+- Use the annual average for a same-year comparison; use the specific month's value
+  (e.g. "Jan. 2002") if that's literally what the source chart/table cites, rather than
+  substituting that year's annual average.
+- Matches escalate_cost() in scripts/capital_cost_estimation.py, which implements this
+  same C2 = C1*(I2/I1) relationship against the CEPCI dict defined at the top of that file.

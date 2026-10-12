@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compressor Train Sizing Calculator — Type, Efficiency, Power & Stage-Count Optimizer | Joshua Sharpes</title>
+<style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:    #0F172A;
+      --navy2:   #1E293B;
+      --blue:    #2563EB;
+      --blue-lt: #EFF6FF;
+      --steel:   #334155;
+      --muted:   #64748B;
+      --border:  #E2E8F0;
+      --bg:      #F8FAFC;
+      --white:   #FFFFFF;
+      --radius:  8px;
+      --shadow:  0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+      --shadow-md: 0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.06);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+                   'Helvetica Neue', Arial, sans-serif;
+      font-size: 15px; line-height: 1.6; color: var(--steel); background: var(--bg);
+    }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+    section { padding: 56px 0; }
+    section:nth-child(even) { background: var(--white); }
+    .section-label { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--blue); margin-bottom: 6px; }
+    .section-title { font-size: 22px; font-weight: 700; color: var(--navy); margin-bottom: 10px; }
+    .section-desc  { font-size: 14px; color: var(--muted); max-width: 620px; margin-bottom: 32px; line-height: 1.65; }
+
+    /* ── Hero ── */
+    .hero { background: var(--navy); padding: 72px 0 64px; color: var(--white); }
+    .hero-eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: #60A5FA; margin-bottom: 12px; }
+    .hero-name    { font-size: 42px; font-weight: 800; color: var(--white); line-height: 1.15; margin-bottom: 16px; letter-spacing: -.5px; }
+    .hero-statement { font-size: 17px; color: #CBD5E1; max-width: 580px; line-height: 1.7; margin-bottom: 32px; }
+    .hero-statement strong { color: var(--white); }
+    .hero-links { display: flex; flex-wrap: wrap; gap: 12px; }
+    .hero-link { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: var(--radius); font-size: 13px; font-weight: 600; transition: opacity .15s; }
+    .hero-link:hover { opacity: .85; text-decoration: none; }
+    .hero-link-primary { background: var(--blue); color: var(--white); }
+    .hero-link-outline { background: transparent; color: #CBD5E1; border: 1px solid #334155; }
+    .hero-link-outline.active { background: var(--blue); color: var(--white); border-color: var(--blue); }
+
+    /* ── Narrative ── */
+    section.narrative { background: var(--navy2); padding: 48px 0; }
+    .narrative p { font-size: 15px; color: #E2E8F0; line-height: 1.8; max-width: 700px; }
+    .narrative p + p { margin-top: 14px; }
+    .narrative strong { color: #F1F5F9; font-weight: 700; }
+    .stat-row { display: flex; flex-wrap: wrap; gap: 32px; margin-top: 32px; }
+    .stat { display: flex; flex-direction: column; }
+    .stat-num { font-size: 32px; font-weight: 800; color: #60A5FA; line-height: 1; }
+    .stat-lbl  { font-size: 12px; color: #CBD5E1; margin-top: 4px; text-transform: uppercase; letter-spacing: .08em; }
+
+    /* ── Card grid ── */
+    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+    .cards-2col { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); }
+    .card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px; transition: box-shadow .15s, transform .15s; }
+    .card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+    .card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .card-title  { font-size: 15px; font-weight: 700; color: var(--navy); line-height: 1.35; }
+    .badge { flex-shrink: 0; font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; }
+    .badge-ppt  { background: #FEF3C7; color: #92400E; }
+    .badge-notes{ background: #DCFCE7; color: #166534; }
+    .card-desc  { font-size: 13px; color: var(--muted); line-height: 1.55; }
+    .card-link  { margin-top: auto; padding-top: 8px; font-size: 13px; font-weight: 600; color: var(--blue); display: inline-flex; align-items: center; gap: 4px; }
+    .card-link::after { content: ' →'; }
+    .card-link-yt { color: #fff; background: #FF0000; padding: 2px 10px; border-radius: 4px; margin-left: 8px; }
+    .card-link-yt::after { content: none; }
+    .card-link-yt:hover { background: #CC0000; }
+
+    /* ── Project cards ── */
+    .project-card { background: var(--white); border: 1px solid var(--border); border-left: 4px solid var(--blue); border-radius: var(--radius); padding: 24px 26px; box-shadow: var(--shadow); transition: box-shadow .15s, transform .15s; }
+    .project-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+    .project-card-title { font-size: 17px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+    .project-card-desc  { font-size: 14px; color: var(--muted); line-height: 1.65; margin-bottom: 16px; }
+    .project-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+    .project-tag  { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; background: var(--blue-lt); color: var(--blue); }
+    .project-link { display: inline-flex; align-items: center; gap: 6px; padding: 9px 20px; background: var(--blue); color: var(--white); border-radius: var(--radius); font-size: 13px; font-weight: 600; transition: opacity .15s; }
+    .project-link:hover { opacity: .88; text-decoration: none; }
+
+    /* ── Collapsible sub-sections ── */
+    details { margin-bottom: 18px; }
+    summary {
+      list-style: none; cursor: pointer;
+      font-size: 14px; font-weight: 700; color: var(--navy);
+      padding: 11px 16px; background: var(--bg);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      display: flex; align-items: center; gap: 10px;
+      user-select: none; transition: background .12s, border-color .12s;
+    }
+    /* Top-level tool/section headers only (direct children of .container) stay pinned while the
+       user scrolls through that section's content, so they always know which tool they're in, and
+       release on their own once the section ends and the next one takes over -- native `sticky`
+       bounds itself to the parent <details>, so nothing further is needed for the "release" half.
+       Deliberately NOT applied to nested summaries (e.g. a tool's own internal "Advanced assumptions"
+       toggle), which are never a direct child of .container. */
+    .container > details > summary {
+      position: sticky; top: 12px; z-index: 40;
+      box-shadow: 0 2px 8px rgba(0,0,0,.07);
+    }
+    .container > details[open] > summary { box-shadow: 0 2px 10px rgba(0,0,0,.12); }
+    summary::-webkit-details-marker { display: none; }
+    summary::marker { display: none; }
+    summary:hover { background: #eef1f6; border-color: #c8d0dc; }
+    details[open] > summary { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom-color: var(--blue); }
+    .sum-arrow { display: inline-block; width: 16px; text-align: center; font-size: 11px; color: var(--muted); transition: transform .18s; flex-shrink: 0; }
+    details[open] > summary .sum-arrow { transform: rotate(90deg); }
+    .sum-title { flex: 1; }
+    .sum-count { font-size: 11px; font-weight: 600; color: var(--muted); background: var(--white); padding: 2px 8px; border-radius: 20px; border: 1px solid var(--border); flex-shrink: 0; }
+    .details-body { padding: 20px 0 4px; }
+
+    /* ── Notes grid ── */
+    .notes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+    .note-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 8px; transition: box-shadow .15s, transform .15s; }
+    .note-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+    .note-icon   { font-size: 22px; line-height: 1; }
+    .note-title  { font-size: 13px; font-weight: 700; color: var(--navy); }
+    .note-source { font-size: 11px; color: var(--muted); }
+    .note-link   { font-size: 12px; font-weight: 600; color: var(--blue); }
+
+    /* ── Book cover strip (matches personal site style) ── */
+    .book-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      padding: 18px 0 4px;
+      align-items: flex-end;
+    }
+    .book-cover {
+      height: 180px;
+      width: auto;
+      display: block;
+      border-radius: 3px;
+      box-shadow: 0 3px 10px rgba(0,0,0,.25);
+      transition: transform .15s, box-shadow .15s;
+      background: #dde;
+    }
+    .book-cover:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 6px 18px rgba(0,0,0,.3);
+    }
+    .book-cover[src=""] { display: none; }
+
+    /* ── Video grid ── */
+    .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+    .video-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); cursor: pointer; transition: box-shadow .15s, transform .15s; }
+    .video-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+    .video-thumb { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; overflow: hidden; }
+    .video-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity .2s; }
+    .video-card:hover .video-thumb img { opacity: .85; }
+    .play-btn { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+    .play-btn::after  { content: ''; width: 44px; height: 44px; background: rgba(0,0,0,.65); border-radius: 50%; }
+    .play-btn::before { content: '▶'; position: absolute; color: #fff; font-size: 16px; margin-left: 3px; z-index: 1; }
+    .video-thumb iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
+    .video-info     { padding: 10px 12px 12px; }
+    .video-title    { font-size: 12px; font-weight: 600; color: var(--navy); line-height: 1.4; margin-bottom: 4px; }
+    .video-duration { font-size: 11px; color: var(--muted); }
+
+    /* ── Footer ── */
+    footer { background: var(--navy); padding: 32px 0; color: #64748B; font-size: 13px; }
+    footer .container { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    footer a { color: #94A3B8; }
+    footer a:hover { color: var(--white); text-decoration: none; }
+
+    @media (max-width: 640px) {
+      .hero-name      { font-size: 30px; }
+      .hero-statement { font-size: 15px; }
+      .cards-2col     { grid-template-columns: 1fr; }
+      .notes-grid     { grid-template-columns: repeat(2, 1fr); }
+      .stat-row       { gap: 20px; }
+      section         { padding: 40px 0; }
+      .book-cover     { height: 140px; }
+    }
+
+    /* ── Resume side-by-side split view ── */
+    :root { --resume-split: 60%; }
+    body.resume-split { overflow: hidden; }
+    body.resume-split #site-content {
+      position: fixed; top: 0; bottom: 0; left: 0;
+      width: var(--resume-split);
+      overflow-y: auto; overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
+    .resume-resizer {
+      display: none;
+      position: fixed; top: 0; bottom: 0;
+      left: var(--resume-split);
+      width: 10px; margin-left: -5px;
+      cursor: ew-resize;
+      z-index: 1001;
+      background: transparent;
+    }
+    .resume-resizer::before {
+      content: '';
+      position: absolute; top: 0; bottom: 0; left: 4px;
+      width: 2px; background: var(--border);
+    }
+    .resume-resizer::after {
+      content: '\21D4'; /* ⇔ double-headed arrow */
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 22px; height: 22px; line-height: 22px; text-align: center;
+      border-radius: 50%; background: var(--navy); color: #fff;
+      font-size: 13px; box-shadow: var(--shadow-md);
+    }
+    .resume-resizer:hover::before, .resume-resizer.dragging::before { background: var(--blue); }
+    body.resume-split .resume-resizer { display: block; }
+    body.resume-dragging { cursor: ew-resize !important; user-select: none; }
+    body.resume-dragging .resume-resizer::before { background: var(--blue); }
+    .resume-pane {
+      display: none;
+      position: fixed; top: 0; bottom: 0; right: 0;
+      left: var(--resume-split);
+      flex-direction: column;
+      background: #525659;
+      z-index: 1000;
+    }
+    body.resume-split .resume-pane { display: flex; }
+    .resume-pane-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; padding: 8px 14px; background: var(--navy); color: #fff;
+      font-size: 12.5px; flex-shrink: 0;
+    }
+    .resume-pane-bar span { opacity: .85; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .resume-pane-actions { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+    .resume-pane-actions a { color: #fff; opacity: .85; font-size: 12.5px; }
+    .resume-pane-actions a:hover { opacity: 1; text-decoration: underline; }
+    .resume-pane-close {
+      background: none; border: none; color: #fff; font-size: 16px; line-height: 1;
+      cursor: pointer; opacity: .85; padding: 2px 4px;
+    }
+    .resume-pane-close:hover { opacity: 1; }
+    .resume-pane iframe { flex: 1; border: none; width: 100%; background: #525659; }
+    @media (max-width: 768px) {
+      .resume-resizer, .resume-pane { display: none !important; }
+      body.resume-split { overflow: visible; }
+      body.resume-split #site-content { position: static; width: auto; overflow: visible; }
+    }
+  </style>
+</head>
+<body>
+<section>
+  <div class="container">
+    <div class="section-label">Process Engineering Tools</div>
+    <h2 class="section-title">Compressor Train Sizing Calculator — Type, Efficiency, Power & Stage-Count Optimizer</h2>
+    <p class="section-desc">Standalone copy of the calculator on <a href="https://jsharpes-portfolio.netlify.app">jsharpes-portfolio.netlify.app</a>.
+    Method, sources, validation and limits: <a href="README.md">README.md</a> in this folder.</p>
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:28px;">
+      <span style="font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.08em;">Units</span>
+      <div role="group" aria-label="Unit system" style="display:inline-flex; border:1px solid var(--border); border-radius:3px; overflow:hidden;">
+        <button type="button" id="site-unitBtn-us" class="site-unitBtn active" style="padding:6px 16px; font-size:13px; font-weight:600; border:none; cursor:pointer;">US</button>
+        <button type="button" id="site-unitBtn-si" class="site-unitBtn" style="padding:6px 16px; font-size:13px; font-weight:600; border:none; cursor:pointer; border-left:1px solid var(--border);">SI</button>
+      </div>
+      <span style="font-size:12px; color:var(--muted);">applies to every calculator below</span>
+    </div>
+    <script>
+      window.SITE_UNIT_SYS = window.SITE_UNIT_SYS || 'us';
+      // Shared conversion helpers -- every calculator's own IIFE may call these instead of
+      // duplicating the switch statement. Calc engines stay US-customary internally always;
+      // these only convert for display/input-reading, exactly like cps-calc's original pattern.
+      window.usToSi = function(kind, v){
+        switch(kind){
+          case 'flow': return v*0.2271247;      // gpm -> m3/h
+          case 'len_ft': return v*0.3048;       // ft -> m
+          case 'len_in': return v*25.4;         // in -> mm
+          case 'area_in2': return v*645.16;     // in2 -> mm2
+          case 'vel': return v*0.3048;          // ft/s -> m/s
+          case 'press': return v*6.894757;      // psi(a/g) -> kPa
+          case 'power': return v*0.7456999;     // hp -> kW
+          case 'force': return v*4.448222;      // lbf -> N
+          case 'temp': return (v-32)/1.8;       // degF -> degC (affine)
+          case 'mass_hr': return v*0.45359237;  // lb/hr -> kg/hr
+          case 'density': return v*16.018463;   // lb/ft3 -> kg/m3
+          case 'htc': return v*5.678263;        // Btu/(hr.ft2.F) -> W/(m2.K)
+          default: return v;
+        }
+      };
+      window.siToUs = function(kind, v){
+        switch(kind){
+          case 'flow': return v/0.2271247;
+          case 'len_ft': return v/0.3048;
+          case 'len_in': return v/25.4;
+          case 'area_in2': return v/645.16;
+          case 'vel': return v/0.3048;
+          case 'press': return v/6.894757;
+          case 'power': return v/0.7456999;
+          case 'force': return v/4.448222;
+          case 'temp': return v*1.8+32;
+          case 'mass_hr': return v/0.45359237;
+          case 'density': return v/16.018463;
+          case 'htc': return v/5.678263;
+          default: return v;
+        }
+      };
+      window.UNIT_LABEL_SITE = {
+        flow:{us:'gpm',si:'m³/h'}, len_ft:{us:'ft',si:'m'}, len_in:{us:'in',si:'mm'},
+        area_in2:{us:'in²',si:'mm²'}, vel:{us:'ft/s',si:'m/s'}, press:{us:'psi',si:'kPa'},
+        power:{us:'hp',si:'kW'}, force:{us:'lbf',si:'N'}, temp:{us:'°F',si:'°C'},
+        mass_hr:{us:'lb/hr',si:'kg/hr'}, density:{us:'lb/ft³',si:'kg/m³'},
+      };
+      (function(){
+        var usBtn = document.getElementById('site-unitBtn-us'), siBtn = document.getElementById('site-unitBtn-si');
+        function setSiteUnits(sys){
+          if(sys === window.SITE_UNIT_SYS) return;
+          window.SITE_UNIT_SYS = sys;
+          usBtn.classList.toggle('active', sys==='us');
+          siBtn.classList.toggle('active', sys==='si');
+          window.dispatchEvent(new CustomEvent('site-units-change', {detail:{sys:sys}}));
+        }
+        usBtn.addEventListener('click', function(){ setSiteUnits('us'); });
+        siBtn.addEventListener('click', function(){ setSiteUnits('si'); });
+      })();
+    </script>
+    <style>
+      .site-unitBtn{background:var(--white); color:var(--muted);}
+      .site-unitBtn.active{background:var(--blue); color:#fff;}
+      .site-unitBtn:not(.active):hover{background:var(--bg);}
+    </style>
+    <details open>
+      <summary>
+        <span class="sum-arrow">›</span>
+        <span class="sum-title">Compressor Train Sizing Calculator — Type, Efficiency, Power &amp; Stage-Count Optimizer</span>
+        <span class="sum-count">N = 1-6 stages</span>
+      </summary>
+      <div class="details-body">
+
+        <style>
+          #ctc-tool .ctc-subtitle { font-size:13px; color:var(--muted); margin-bottom:18px; line-height:1.6; }
+          #ctc-tool .ctc-layout { display:grid; grid-template-columns:360px 1fr; gap:16px; align-items:start; }
+          #ctc-tool .ctc-panel { background:var(--white); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; box-shadow:var(--shadow); margin-bottom:14px; }
+          #ctc-tool .ctc-sh { font-size:10px; font-weight:700; color:var(--blue); text-transform:uppercase; letter-spacing:.1em; margin-bottom:10px; }
+          #ctc-tool .ctc-row { display:flex; align-items:center; gap:8px; margin-bottom:9px; }
+          #ctc-tool .ctc-row:last-child { margin-bottom:0; }
+          #ctc-tool .ctc-lbl { font-size:11.5px; color:var(--muted); flex:1 1 auto; line-height:1.35; }
+          #ctc-tool .ctc-row input[type=number], #ctc-tool .ctc-row select {
+            width:132px; flex-shrink:0; font-size:12px; padding:5px 7px; border:1px solid var(--border);
+            border-radius:6px; background:var(--white); color:var(--navy); font-family:"Courier New",monospace;
+          }
+          #ctc-tool .ctc-row select { font-family:inherit; width:170px; }
+          #ctc-tool .ctc-note { font-size:10.5px; color:var(--muted); margin:-4px 0 9px; line-height:1.5; font-style:italic; }
+          #ctc-tool .ctc-computed { font-size:12px; font-weight:700; color:var(--navy); }
+          #ctc-tool .ctc-sub-panel { border-top:1px dashed var(--border); margin-top:10px; padding-top:10px; }
+          #ctc-tool .ctc-sub-panel.ctc-hidden { display:none; }
+          #ctc-tool .ctc-toggle-adv {
+            font-size:12px; font-weight:600; color:var(--blue); background:none; border:1px solid var(--border);
+            border-radius:6px; padding:8px 12px; cursor:pointer; width:100%; text-align:left;
+          }
+          #ctc-tool .ctc-toggle-adv:hover { background:var(--bg); }
+          #ctc-tool .ctc-advanced.ctc-hidden { display:none; }
+          #ctc-tool .ctc-warn { background:#fff8e1; border:1px solid #f9a825; border-radius:var(--radius); padding:10px 14px; font-size:12px; color:#6d4c00; margin-bottom:12px; }
+          #ctc-tool .ctc-warn.ctc-hidden { display:none; }
+          #ctc-tool .ctc-mgrid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+          #ctc-tool .ctc-m { background:var(--bg); border:1px solid var(--border); border-radius:var(--radius); padding:9px 11px; }
+          #ctc-tool .ctc-m-lbl { font-size:10.5px; color:var(--muted); margin-bottom:3px; }
+          #ctc-tool .ctc-m-val { font-size:15px; font-weight:700; color:var(--navy); font-family:"Courier New",monospace; }
+          #ctc-tool .ctc-m-unit { font-size:10.5px; color:var(--muted); margin-left:2px; }
+          #ctc-tool .ctc-flag-ok { color:#16A34A; }
+          #ctc-tool .ctc-flag-caution { color:#D97706; }
+          #ctc-tool .ctc-flag-exceeds { color:#DC2626; }
+          #ctc-tool .ctc-flag-na { color:var(--muted); }
+          #ctc-tool .ctc-optimizer { border-left:4px solid var(--border); }
+          #ctc-tool .ctc-optimizer.match { border-left-color:#16A34A; }
+          #ctc-tool .ctc-optimizer.mismatch { border-left-color:#D97706; }
+          #ctc-tool .ctc-opt-title { font-size:13px; font-weight:700; color:var(--navy); margin-bottom:6px; }
+          #ctc-tool .ctc-opt-detail { font-size:12px; color:var(--steel); line-height:1.55; margin-bottom:8px; }
+          #ctc-tool .ctc-update-btn { font-size:12px; font-weight:700; padding:7px 14px; border-radius:6px; border:none; background:var(--navy); color:#fff; cursor:pointer; }
+          #ctc-tool .ctc-update-btn:hover { background:var(--navy2); }
+          #ctc-tool .ctc-sweep-note { font-size:11px; color:var(--muted); margin-bottom:10px; line-height:1.5; font-style:italic; }
+          #ctc-tool details.ctc-sweep-details { border:1px solid var(--border); border-radius:var(--radius); background:var(--white); box-shadow:var(--shadow); padding:12px 14px; margin-bottom:14px; }
+          #ctc-tool details.ctc-sweep-details summary { cursor:pointer; font-size:12px; font-weight:700; color:var(--blue); }
+          #ctc-tool .ctc-table-wrap { overflow-x:auto; margin-top:10px; }
+          #ctc-tool table.ctc-sweep-table { border-collapse:collapse; width:100%; font-size:11px; white-space:nowrap; }
+          #ctc-tool table.ctc-sweep-table th, #ctc-tool table.ctc-sweep-table td { padding:6px 8px; border-bottom:1px solid var(--border); text-align:right; }
+          #ctc-tool table.ctc-sweep-table th { text-align:right; color:var(--muted); font-weight:700; text-transform:uppercase; font-size:9.5px; letter-spacing:.04em; }
+          #ctc-tool table.ctc-sweep-table td:first-child, #ctc-tool table.ctc-sweep-table th:first-child { text-align:left; }
+          #ctc-tool table.ctc-sweep-table tr.ctc-baseline-row { background:#EFF6FF; }
+          #ctc-tool table.ctc-sweep-table tr.ctc-recommended-row { background:#DCFCE7; }
+          #ctc-tool .ctc-download-btn { font-size:13px; font-weight:700; padding:10px 16px; border-radius:6px; border:none; background:var(--blue); color:#fff; cursor:pointer; width:100%; }
+          #ctc-tool .ctc-download-btn:hover { background:#1D4ED8; }
+          #ctc-tool .ctc-download-btn:disabled { background:var(--muted); cursor:wait; }
+          #ctc-tool .ctc-download-status { font-size:11px; color:var(--muted); margin-top:8px; text-align:center; min-height:14px; }
+          #ctc-tool .ctc-gaps { font-size:11px; color:var(--muted); line-height:1.7; }
+          #ctc-tool .ctc-gaps summary { cursor:pointer; font-weight:700; color:var(--blue); font-size:12px; margin-bottom:6px; }
+          #ctc-tool .ctc-gaps ul { margin:8px 0 0 18px; }
+          #ctc-tool .ctc-foot { font-size:11px; color:var(--muted); margin-top:16px; text-align:center; }
+          #ctc-tool .ctc-foot a { color:var(--blue); font-weight:600; }
+          @media (max-width:820px) { #ctc-tool .ctc-layout { grid-template-columns:1fr; } }
+        </style>
+
+        <div id="ctc-tool">
+          <p class="ctc-subtitle">Sizes a multi-stage compressor train (equal pressure ratio per stage, full intercooling back to suction temperature) from Compressor Selection/Sizing methodology — auto-suggests type and efficiency method from your process conditions, then sweeps N = 1-6 stages to recommend the economically optimal stage count (Seider Ch. 16.5 equipment costing + Peters &amp; Timmerhaus payback screen). Change any input and every result recomputes live. See the <a href="slides/compressor-selection/" target="_blank" rel="noopener">Compressor Selection</a>, <a href="slides/compressor-sizing/" target="_blank" rel="noopener">Compressor Train Sizing</a>, and <a href="slides/perrys-compressors/" target="_blank" rel="noopener">Perry's Compressors</a> presentations for the underlying method.</p>
+
+          <div class="ctc-layout">
+
+            <!-- LEFT: inputs -->
+            <div class="ctc-inputs">
+
+              <div class="ctc-panel">
+                <div class="ctc-sh">Critical Inputs</div>
+                <div class="ctc-row"><span class="ctc-lbl">Gas</span><select id="ctc-gas"></select></div>
+                <div class="ctc-row ctc-sub-panel ctc-hidden" id="ctc-gas-manual-row1" style="border-top:none;margin-top:0;padding-top:0;">
+                  <span class="ctc-lbl">Manual MW (lb/lbmol)</span><input type="number" id="ctc-mw-manual" value="20.0" step="0.01">
+                </div>
+                <div class="ctc-row ctc-hidden" id="ctc-gas-manual-row2">
+                  <span class="ctc-lbl">Manual k = Cp/Cv</span><input type="number" id="ctc-k-manual" value="1.30" step="0.01">
+                </div>
+                <div class="ctc-row"><span class="ctc-lbl">Compressibility factor, Z</span><input type="number" id="ctc-z" value="1.00" step="0.01"></div>
+                <div class="ctc-row"><span class="ctc-lbl">Suction temperature, T1 (°F)</span><input type="number" id="ctc-t1" value="100" step="1"></div>
+                <div class="ctc-row"><span class="ctc-lbl">Suction pressure, P1 (psia)</span><input type="number" id="ctc-p1" value="100" step="1"></div>
+                <div class="ctc-row"><span class="ctc-lbl">Final discharge pressure, P2 (psia)</span><input type="number" id="ctc-p2" value="1000" step="1"></div>
+                <div class="ctc-row"><span class="ctc-lbl">Mass flow rate, ṁ (lb/hr)</span><input type="number" id="ctc-mdot" value="50000" step="100"></div>
+                <div class="ctc-row"><span class="ctc-lbl">N_stages (1-6, drives results panel)</span><input type="number" id="ctc-nstages" value="3" min="1" max="6" step="1"></div>
+              </div>
+
+              <div class="ctc-panel">
+                <div class="ctc-sh">Type &amp; Efficiency (auto-computed — override anytime)</div>
+                <div class="ctc-row"><span class="ctc-lbl">Auto-suggested type</span><span class="ctc-computed" id="ctc-auto-type">—</span></div>
+                <div class="ctc-row"><span class="ctc-lbl">Type override</span><select id="ctc-type-override"></select></div>
+                <div class="ctc-row"><span class="ctc-lbl">Effective method</span><span class="ctc-computed" id="ctc-eff-method">—</span></div>
+                <div class="ctc-row"><span class="ctc-lbl">Method override</span><select id="ctc-method-override"></select></div>
+
+                <div class="ctc-sub-panel ctc-hidden" id="ctc-manual-eta-block">
+                  <div class="ctc-row"><span class="ctc-lbl">Manual ηp</span><input type="number" id="ctc-eta-manual" value="0.75" step="0.01"></div>
+                </div>
+
+                <div class="ctc-sub-panel ctc-hidden" id="ctc-scaleup-block">
+                  <div class="ctc-note">Casey &amp; Robinson Eq. 17 — f1/f2 come from their Appendix 1 equations 23/24, not in this project's source decks. Enter vendor/external values.</div>
+                  <div class="ctc-row"><span class="ctc-lbl">η1 (reference efficiency)</span><input type="number" id="ctc-su-eta1" value="0" step="0.001"></div>
+                  <div class="ctc-row"><span class="ctc-lbl">Bref</span><input type="number" id="ctc-su-bref" value="0" step="0.001"></div>
+                  <div class="ctc-row"><span class="ctc-lbl">fref</span><input type="number" id="ctc-su-fref" value="0" step="0.001"></div>
+                  <div class="ctc-row"><span class="ctc-lbl">f1</span><input type="number" id="ctc-su-f1" value="0" step="0.001"></div>
+                  <div class="ctc-row"><span class="ctc-lbl">f2</span><input type="number" id="ctc-su-f2" value="0" step="0.001"></div>
+                </div>
+
+                <div class="ctc-sub-panel ctc-hidden" id="ctc-balje-block">
+                  <div class="ctc-note">Balje chart itself isn't in the source decks — Ns/Ds are computed here, but ηc must be read off the chart elsewhere and entered manually.</div>
+                  <div class="ctc-row"><span class="ctc-lbl">Shaft speed, N (rpm)</span><input type="number" id="ctc-balje-n" value="3600" step="10"></div>
+                  <div class="ctc-row"><span class="ctc-lbl">Impeller diameter, D (ft)</span><input type="number" id="ctc-balje-d" value="1.5" step="0.1"></div>
+                  <div class="ctc-row"><span class="ctc-lbl">ηc (read from Balje chart)</span><input type="number" id="ctc-balje-etac" value="0" step="0.01"></div>
+                  <div class="ctc-row"><span class="ctc-lbl">Computed Ns / Ds</span><span class="ctc-computed" id="ctc-balje-nsds">—</span></div>
+                </div>
+              </div>
+
+              <div class="ctc-panel">
+                <div class="ctc-sh">Economics</div>
+                <div class="ctc-row"><span class="ctc-lbl">Operating hours/year</span><input type="number" id="ctc-hours" value="8000" step="100"></div>
+                <div class="ctc-row"><span class="ctc-lbl">Electricity cost ($/kWh)</span><input type="number" id="ctc-elec" value="0.07" step="0.01"></div>
+                <div class="ctc-row"><span class="ctc-lbl">Risk level (Table 8-1, P&amp;T)</span><select id="ctc-risk"></select></div>
+                <div class="ctc-row"><span class="ctc-lbl">mar (midpoint of risk band)</span><span class="ctc-computed" id="ctc-mar-readout">—</span></div>
+                <div class="ctc-row"><span class="ctc-lbl">N, evaluation period (yr)</span><input type="number" id="ctc-neval" value="10" step="1"></div>
+              </div>
+
+              <button class="ctc-toggle-adv" id="ctc-toggle-adv" type="button">Show advanced cost &amp; sizing basis ▾</button>
+              <div class="ctc-panel ctc-advanced ctc-hidden" id="ctc-advanced-panel">
+                <div class="ctc-sh">Cost &amp; Sizing Basis (Seider Ch. 16.5 — real defaults, rarely changed)</div>
+                <div class="ctc-row"><span class="ctc-lbl">CEPCI Year</span><select id="ctc-cepci-year"></select></div>
+                <div class="ctc-row"><span class="ctc-lbl">Manual CEPCI</span><input type="number" id="ctc-cepci-manual" value="567" step="0.1"></div>
+                <div class="ctc-row"><span class="ctc-lbl">Effective CEPCI</span><span class="ctc-computed" id="ctc-cepci-effective">—</span></div>
+                <div class="ctc-row"><span class="ctc-lbl">Compressor driver</span><select id="ctc-driver"></select></div>
+                <div class="ctc-row"><span class="ctc-lbl">Compressor material</span><select id="ctc-comp-material"></select></div>
+                <div class="ctc-row"><span class="ctc-lbl">Compressor bare-module factor</span><input type="number" id="ctc-comp-bmf" value="2.15" step="0.01"></div>
+                <div class="ctc-row"><span class="ctc-lbl">Intercooler head type</span><select id="ctc-hx-head-type"></select></div>
+                <div class="ctc-row"><span class="ctc-lbl">Intercooler shell/tube material</span><select id="ctc-hx-material"></select></div>
+                <div class="ctc-row"><span class="ctc-lbl">Intercooler tube length (ft)</span><select id="ctc-hx-tube-length"></select></div>
+                <div class="ctc-row"><span class="ctc-lbl">Overall U (Btu/hr·ft²·°F)</span><input type="number" id="ctc-u" value="50" step="1"></div>
+                <div class="ctc-row"><span class="ctc-lbl">Cooling water in (°F)</span><input type="number" id="ctc-cw-in" value="90" step="1"></div>
+                <div class="ctc-row"><span class="ctc-lbl">Cooling water out (°F)</span><input type="number" id="ctc-cw-out" value="120" step="1"></div>
+                <div class="ctc-row"><span class="ctc-lbl">Intercooler bare-module factor</span><input type="number" id="ctc-hx-bmf" value="3.29" step="0.01"></div>
+                <div class="ctc-row"><span class="ctc-lbl">Combined tax rate</span><input type="number" id="ctc-tax" value="0.21" step="0.01"></div>
+              </div>
+
+            </div>
+
+            <!-- RIGHT: results -->
+            <div class="ctc-results">
+              <div id="ctc-warn" class="ctc-warn ctc-hidden"></div>
+
+              <div class="ctc-panel">
+                <div class="ctc-sh">Results at N = <span id="ctc-result-n">3</span> stage(s)</div>
+                <div class="ctc-mgrid">
+                  <div class="ctc-m"><div class="ctc-m-lbl">Inlet flow, Q</div><div class="ctc-m-val" id="ctc-r-q">—</div><div class="ctc-m-unit">ACFM</div></div>
+                  <div class="ctc-m"><div class="ctc-m-lbl">Adiabatic head, H_ad</div><div class="ctc-m-val" id="ctc-r-had">—</div><div class="ctc-m-unit">ft</div></div>
+                  <div class="ctc-m"><div class="ctc-m-lbl">Effective type</div><div class="ctc-m-val" id="ctc-r-type" style="font-size:12px;">—</div></div>
+                  <div class="ctc-m"><div class="ctc-m-lbl">Selected ηp</div><div class="ctc-m-val" id="ctc-r-eta">—</div></div>
+                  <div class="ctc-m"><div class="ctc-m-lbl">Polytropic exponent, n</div><div class="ctc-m-val" id="ctc-r-n">—</div></div>
+                  <div class="ctc-m"><div class="ctc-m-lbl">Discharge temp, Tout</div><div class="ctc-m-val" id="ctc-r-tout">—</div><div class="ctc-m-unit">°F</div></div>
+                  <div class="ctc-m"><div class="ctc-m-lbl">Tallow flag</div><div class="ctc-m-val" id="ctc-r-flag">—</div></div>
+                  <div class="ctc-m"><div class="ctc-m-lbl">Train power</div><div class="ctc-m-val" id="ctc-r-trainhp">—</div><div class="ctc-m-unit">hp</div></div>
+                  <div class="ctc-m"><div class="ctc-m-lbl">Per-stage power</div><div class="ctc-m-val" id="ctc-r-stagehp">—</div><div class="ctc-m-unit">hp</div></div>
+                </div>
+              </div>
+
+              <div class="ctc-panel ctc-optimizer" id="ctc-optimizer-box">
+                <div class="ctc-opt-title" id="ctc-opt-title">—</div>
+                <div class="ctc-opt-detail" id="ctc-opt-detail">—</div>
+                <button class="ctc-update-btn ctc-hidden" id="ctc-update-btn" type="button">Update N_stages</button>
+              </div>
+
+              <details class="ctc-sweep-details">
+                <summary>Show N = 1-6 stage-count sweep (Stage-Count Optimizer detail)</summary>
+                <div class="ctc-sweep-note">ηp is held constant across this sweep at the Selected ηp above (computed once, at your current N_stages) — a documented Class-5 (±30-50%) screening simplification, not re-derived per row.</div>
+                <div class="ctc-table-wrap">
+                  <table class="ctc-sweep-table">
+                    <thead><tr>
+                      <th>N</th><th>r_stage</th><th>H_ad (ft)</th><th>Type</th><th>Tout (°F)</th>
+                      <th>Tallow flag</th><th>Train hp</th><th>TCI ($)</th><th>Incr. PBP (yr)</th><th>Passes?</th>
+                    </tr></thead>
+                    <tbody id="ctc-sweep-body"></tbody>
+                  </table>
+                </div>
+              </details>
+
+              <div class="ctc-panel">
+                <button class="ctc-download-btn" id="ctc-download-btn" type="button">Download personalized spreadsheet (.xlsx)</button>
+                <div class="ctc-download-status" id="ctc-download-status">Carries every input/override above into "Compressor Train Sizing.xlsx" — formulas stay live, so Sheets 2-6 recalculate in Excel from what you typed here.</div>
+              </div>
+
+              <details class="ctc-gaps">
+                <summary>Known simplifications / gaps (carried from the source workbook)</summary>
+                <ul>
+                  <li>Fig. 10-64 type-selection boundaries are eyeballed from a chart image, not precisely digitized — cross-check borderline operating points against the reference chart.</li>
+                  <li>Gas library MW/k are approximate ideal-gas values near ambient — use Custom/Manual Entry for mixtures or non-ideal conditions.</li>
+                  <li>Scale-Up method needs external Casey &amp; Robinson friction-factor data not present in this project's source decks.</li>
+                  <li>Balje method's chart itself isn't available — ηc must come from an external chart reading.</li>
+                  <li>Seider Ch. 16.5 only gives compressor cost equations for Centrifugal, Reciprocating, Screw — every other type shows "n/a - outside Seider correlation coverage," not a fabricated fit.</li>
+                  <li>CEPCI defaults to 567 (no escalation) unless you pick a real year.</li>
+                  <li>Combined tax rate defaults to 21% flat federal (no state) — editable above.</li>
+                  <li>Depreciation life for the after-tax cash flow reuses the evaluation period N, not a separately specified MACRS schedule.</li>
+                  <li>The Stage-Count Optimizer holds ηp constant across the N=1-6 sweep — a documented Class-5 (±30-50%) screening simplification, not per-row-accurate.</li>
+                  <li>Intercooler sizing uses an assumed overall U and a standard 90/120°F cooling-water basis to back into an area for costing — not a full thermal/mechanical HX design.</li>
+                </ul>
+              </details>
+
+              <p class="ctc-foot">Equal pressure ratio/stage, full intercool to T1 · Seider, Seader, Lewin &amp; Widagdo Ch. 16.5 equipment costing · Peters &amp; Timmerhaus Eq. 8-2a/8-2c payback screen · For engineering study use only</p>
+            </div>
+
+          </div>
+        </div>
+
+        <script src="lib/jszip.min.js"></script>
+        <script>
+        (function () {
+  // ==== Compressor Train calculator engine — mirrors Netlify_Calculator_Handoff.md §3-§8 ====
+  var GAS_LIBRARY = [
+    ["Air", 28.97, 1.400], ["Nitrogen (N2)", 28.01, 1.400], ["Oxygen (O2)", 32.00, 1.395],
+    ["Hydrogen (H2)", 2.016, 1.410], ["Carbon Monoxide (CO)", 28.01, 1.400],
+    ["Carbon Dioxide (CO2)", 44.01, 1.289], ["Methane (CH4)", 16.04, 1.32],
+    ["Natural Gas (~0.60 SG)", 17.40, 1.27], ["Ethane (C2H6)", 30.07, 1.19],
+    ["Ethylene (C2H4)", 28.05, 1.24], ["Propane (C3H8)", 44.10, 1.13],
+    ["Propylene (C3H6)", 42.08, 1.15], ["n-Butane (C4H10)", 58.12, 1.09],
+    ["Ammonia (NH3)", 17.03, 1.31], ["Hydrogen Sulfide (H2S)", 34.08, 1.32],
+    ["Chlorine (Cl2)", 70.90, 1.34], ["Sulfur Dioxide (SO2)", 64.07, 1.29],
+    ["Water Vapor / Steam (H2O)", 18.02, 1.33], ["Argon (Ar)", 39.95, 1.667],
+    ["Helium (He)", 4.003, 1.667]
+  ].map(function (r) { return { name: r[0], mw: r[1], k: r[2] }; });
+
+  var COVERAGE = [
+    ["Diaphragm", 1, 10, 1000, 100000],
+    ["Reciprocating", 1, 3000, 500, 100000],
+    ["Rotary - Straight Lobe", 100, 3000, 100, 1000],
+    ["Rotary - Screw", 10, 3000, 100, 10000],
+    ["Rotary - Sliding Vane", 10, 1000, 100, 3000],
+    ["Rotary - Liquid Piston", 1, 300, 1000, 10000],
+    ["Centrifugal - Single Stage", 1000, 100000, 100, 10000],
+    ["Centrifugal - Multistage", 500, 100000, 1000, 100000],
+    ["Axial - Multistage", 3000, 100000, 100, 3000],
+    ["Fan / Blower", 1000, 100000, 10, 1000]
+  ].map(function (r) { return { type: r[0], qMin: r[1], qMax: r[2], hMin: r[3], hMax: r[4] }; });
+
+  var RECIP_X = [1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5];
+  var RECIP_Y = [0.740, 0.790, 0.815, 0.825, 0.833, 0.840, 0.843, 0.846, 0.848, 0.846, 0.843];
+  var CENT_X = [1000, 2000, 4000, 7000, 10000, 20000, 40000, 70000, 100000, 200000];
+  var CENT_Y = [0.650, 0.700, 0.720, 0.730, 0.735, 0.745, 0.755, 0.763, 0.766, 0.770];
+  var AXIAL_X = [75000, 100000, 200000, 400000, 600000];
+  var AXIAL_Y = [0.813, 0.817, 0.827, 0.832, 0.836];
+
+  var QUICK_DEFAULT = {
+    "Reciprocating": 0.80, "Centrifugal - Single Stage": 0.76, "Centrifugal - Multistage": 0.75,
+    "Axial - Multistage": 0.87, "Rotary - Screw": 0.72, "Rotary - Sliding Vane": 0.70,
+    "Rotary - Straight Lobe": 0.68, "Rotary - Liquid Piston": 0.65, "Fan / Blower": 0.72
+  };
+
+  var TALLOW_RANGES = [
+    { match: "Reciprocating", min: 300, max: 350 },
+    { match: "Centrifugal", min: 392, max: 446 },
+    { match: "Rotary", min: 212, max: 350 }
+  ];
+
+  var FD_TABLE = { "Electric Motor": 1.00, "Steam Turbine": 1.15, "Gas Turbine": 1.25 };
+  var FM_COMP_TABLE = { "Carbon Steel": 1.00, "Stainless Steel": 2.5, "Nickel Alloy": 5.0 };
+  var FM_HX_TABLE = {
+    "Carbon steel/Carbon steel": { a: 0, b: 0 },
+    "Carbon steel/Stainless steel": { a: 1.75, b: 0.13 },
+    "Stainless steel/Stainless steel": { a: 2.70, b: 0.07 }
+  };
+  var FL_TABLE = { 8: 1.25, 12: 1.12, 16: 1.05, 20: 1.00 };
+  var RISK_TABLE = [
+    ["Safe - cost of capital", 0.04, 0.08],
+    ["Low - new capacity / established market", 0.08, 0.16],
+    ["Medium - new product/established market or new process tech", 0.16, 0.24],
+    ["High - new product/process / new application", 0.24, 0.32],
+    ["Very High - all-new / high R&D and marketing", 0.32, 0.48]
+  ].map(function (r) { return { label: r[0], min: r[1], max: r[2] }; });
+  var CEPCI_TABLE = {
+    2001: 394.3, 2002: 395.6, 2003: 402.0, 2004: 444.2, 2005: 468.2,
+    2006: 499.6, 2007: 525.4, 2008: 575.4, 2009: 521.9, 2010: 550.8,
+    2011: 585.7, 2012: 584.6, 2013: 567.3, 2014: 576.1, 2015: 556.8,
+    2016: 541.7, 2017: 567.5, 2018: 603.1, 2019: 607.5, 2020: 596.2,
+    2021: 708.8, 2022: 816.0, 2023: 797.9, 2024: 795.4
+  };
+
+  function clampInterp(x, xs, ys) {
+    if (x <= xs[0]) return ys[0];
+    var n = xs.length;
+    if (x >= xs[n - 1]) return ys[n - 1];
+    for (var i = 0; i < n - 1; i++) {
+      if (x >= xs[i] && x <= xs[i + 1]) {
+        var t = (x - xs[i]) / (xs[i + 1] - xs[i]);
+        return ys[i] + t * (ys[i + 1] - ys[i]);
+      }
+    }
+    return ys[n - 1];
+  }
+
+  function marFromRisk(riskLabel) {
+    var row = null;
+    for (var i = 0; i < RISK_TABLE.length; i++) if (RISK_TABLE[i].label === riskLabel) row = RISK_TABLE[i];
+    if (!row) row = RISK_TABLE[1];
+    return (row.min + row.max) / 2;
+  }
+
+  function deriveBase(inp) {
+    var T1_R = inp.T1_F + 459.67;
+    var R_prime = 1545.349 / inp.MW;
+    var r_total = inp.P2_psia / inp.P1_psia;
+    var rho1 = (inp.P1_psia * inp.MW) / (10.7316 * inp.Z * T1_R);
+    var Q_ACFM = (inp.mdot_lbhr / 60) / rho1;
+    return { T1_R: T1_R, R_prime: R_prime, r_total: r_total, rho1: rho1, Q_ACFM: Q_ACFM };
+  }
+
+  function rStage(r_total, N) { return Math.pow(r_total, 1 / N); }
+  function hAd(k, R_prime, T1_R, r_stage) { return (k / (k - 1)) * R_prime * T1_R * (Math.pow(r_stage, (k - 1) / k) - 1); }
+
+  function suggestChoices(Q, H_ad) {
+    var matches = [];
+    for (var i = 0; i < COVERAGE.length; i++) {
+      var c = COVERAGE[i];
+      if (Q >= c.qMin && Q <= c.qMax && H_ad >= c.hMin && H_ad <= c.hMax) matches.push(c.type);
+    }
+    return matches.length ? matches : ["None"];
+  }
+
+  function empiricalCorrelation(type, r_stage, Q) {
+    if (type.indexOf("Reciprocating") !== -1) return clampInterp(r_stage, RECIP_X, RECIP_Y);
+    if (type.indexOf("Centrifugal") !== -1) return clampInterp(Q, CENT_X, CENT_Y);
+    if (type.indexOf("Axial") !== -1) return clampInterp(Q, AXIAL_X, AXIAL_Y);
+    return "n/a - no digitized chart for this type, use Quick Default";
+  }
+  function quickDefault(type) { return Object.prototype.hasOwnProperty.call(QUICK_DEFAULT, type) ? QUICK_DEFAULT[type] : 0.75; }
+  function scaleUp(eta1, Bref, fref, f1, f2) { return fref === 0 ? 0 : eta1 - (Bref * (f2 - f1)) / fref; }
+  function baljeNsDs(N_rpm, D_ft, Q_ACFM, H_ad) {
+    var omega = N_rpm * 2 * Math.PI / 60;
+    return {
+      Ns: omega * Math.sqrt(Q_ACFM / 60) / Math.pow(32.174 * H_ad, 0.75),
+      Ds: D_ft * Math.pow(32.174 * H_ad, 0.25) / Math.sqrt(Q_ACFM / 60)
+    };
+  }
+
+  function resolveEfficiency(inp, type, r_stage, Q, H_ad) {
+    var method = inp.method_override && inp.method_override !== "Auto"
+      ? inp.method_override
+      : (/Reciprocating|Centrifugal|Axial/.test(type) ? "Empirical Correlation" : "Quick Default");
+    var etaP = null, note = null;
+    if (method === "Empirical Correlation") {
+      var r = empiricalCorrelation(type, r_stage, Q);
+      if (typeof r === "string") note = r; else etaP = r;
+    } else if (method === "Quick Default") {
+      etaP = quickDefault(type);
+    } else if (method === "Scale-Up") {
+      etaP = scaleUp(inp.su_eta1, inp.su_bref, inp.su_fref, inp.su_f1, inp.su_f2);
+      if (inp.su_fref === 0) note = "fref = 0, result forced to 0 — enter real Casey & Robinson friction factors.";
+    } else if (method === "Balje") {
+      etaP = inp.balje_etac;
+      if (!etaP) note = "ηc must be read from the external Balje chart and entered manually.";
+    } else if (method === "Manual") {
+      etaP = inp.eta_p_manual;
+    }
+    if (etaP !== null && (!isFinite(etaP) || etaP <= 0)) { note = note || "Selected efficiency is not a usable positive number."; etaP = null; }
+    return { method: method, etaP: etaP, note: note };
+  }
+
+  function solveN(k, etaP) {
+    if (etaP === null || !isFinite(etaP) || etaP <= 0) return null;
+    var denom = 1 - (k - 1) / (k * etaP);
+    if (denom <= 0) return null;
+    var n = 1 / denom;
+    return isFinite(n) ? n : null;
+  }
+
+  function tallowFlag(type, Tout_F) {
+    if (type === "None") return "UNKNOWN TYPE — cannot verify Tallow; treated as EXCEEDS until inspected manually";
+    for (var i = 0; i < TALLOW_RANGES.length; i++) {
+      var r = TALLOW_RANGES[i];
+      if (type.indexOf(r.match) !== -1) {
+        if (Tout_F > r.max) return "EXCEEDS " + r.max + "F — add a stage";
+        if (Tout_F > r.min) return "CAUTION: " + r.min + "-" + r.max + "F is vendor/lubricant dependent — inspect the specific compressor rating (outside scope)";
+        return "OK";
+      }
+    }
+    return "n/a (Axial/Fan — no Tallow range given in the deck)";
+  }
+  function isBlockingFlag(flag) { return flag.indexOf("EXCEEDS") === 0 || flag.indexOf("UNKNOWN TYPE") === 0; }
+
+  function perStage(base, k, etaP, n, r_stage, mdot_lbhr, Z) {
+    var Tout_R = base.T1_R * Math.pow(r_stage, (n - 1) / n);
+    var Hp_ft = (n / (n - 1)) * Z * base.R_prime * base.T1_R * (Math.pow(r_stage, (n - 1) / n) - 1);
+    var Pgas_hp = (mdot_lbhr * Hp_ft / etaP) / 1980000;
+    return { Tout_R: Tout_R, Tout_F: Tout_R - 459.67, Hp_ft: Hp_ft, Pgas_hp: Pgas_hp };
+  }
+
+  function seiderCompressorCb(type, Pc_hp) {
+    if (type.indexOf("Centrifugal") !== -1) return Math.exp(9.1553 + 0.63 * Math.log(Pc_hp));
+    if (type.indexOf("Reciprocating") !== -1) return Math.exp(4.6762 + 1.23 * Math.log(Pc_hp));
+    if (type.indexOf("Screw") !== -1) return Math.exp(8.2496 + 0.7243 * Math.log(Pc_hp));
+    return null;
+  }
+  function seiderHxCb(headType, A) {
+    var lnA = Math.log(A);
+    switch (headType) {
+      case "Floating Head": return Math.exp(12.0310 - 0.8709 * lnA + 0.09005 * lnA * lnA);
+      case "Fixed Head": return Math.exp(11.4185 - 0.9228 * lnA + 0.09861 * lnA * lnA);
+      case "U-Tube": return Math.exp(11.5510 - 0.9186 * lnA + 0.09790 * lnA * lnA);
+      case "Kettle Vaporizer": return Math.exp(12.3310 - 0.8709 * lnA + 0.09005 * lnA * lnA);
+      default: return null;
+    }
+  }
+  function hxFm(materialKey, A) {
+    var t = FM_HX_TABLE[materialKey] || FM_HX_TABLE["Carbon steel/Carbon steel"];
+    return (t.a === 0 && t.b === 0) ? 1 : t.a + Math.pow(A / 100, t.b);
+  }
+  function lmtd(Tout_F, T1_F, cwIn, cwOut) {
+    var dtHot = Tout_F - cwOut, dtCold = T1_F - cwIn;
+    if (dtHot <= 0 || dtCold <= 0) return null;
+    if (Math.abs(dtHot - dtCold) < 1e-9) return dtHot;
+    var val = (dtHot - dtCold) / Math.log(dtHot / dtCold);
+    return val > 0 ? val : null;
+  }
+
+  function sweepStageCounts(inp, base, etaP, n) {
+    var rows = [];
+    for (var N = 1; N <= 6; N++) {
+      var r_stage = rStage(base.r_total, N);
+      var H_ad = hAd(inp.k, base.R_prime, base.T1_R, r_stage);
+      var candidates = suggestChoices(base.Q_ACFM, H_ad);
+      var primaryType = candidates[0];
+      var stage = perStage(base, inp.k, etaP, n, r_stage, inp.mdot_lbhr, inp.Z);
+      var tempFlag = tallowFlag(primaryType, stage.Tout_F);
+      var Pc_hp = N * inp.mdot_lbhr * stage.Hp_ft / etaP / 1980000;
+
+      var Cb_comp = seiderCompressorCb(primaryType, Pc_hp);
+      var FD = FD_TABLE[inp.driver] != null ? FD_TABLE[inp.driver] : 1.00;
+      var FM_comp = FM_COMP_TABLE[inp.comp_material] != null ? FM_COMP_TABLE[inp.comp_material] : 1.00;
+      var Cp_comp = Cb_comp === null ? null : Cb_comp * FD * FM_comp * (inp.cepci / 567);
+      var BMC_comp = Cp_comp === null ? null : Cp_comp * inp.comp_bmf;
+
+      var coolersQty = Math.max(N - 1, 0);
+      var CpGasBtu = (inp.k / (inp.k - 1)) * base.R_prime / 778.169;
+      var coolingDuty = inp.mdot_lbhr * CpGasBtu * (stage.Tout_R - base.T1_R);
+      var designPsig = inp.P1_psia * r_stage - 14.696;
+      var LMTD = coolersQty > 0 ? lmtd(stage.Tout_F, inp.T1_F, inp.cw_in_F, inp.cw_out_F) : null;
+      var area = (coolersQty > 0 && LMTD) ? coolingDuty / (inp.U_btu * LMTD) : null;
+
+      var Cb_hx = null, FP = null, FM_hx = null, FL = null, Cp_hx_unit = null, BMC_hx_unit = null, BMC_hx_total = 0;
+      if (coolersQty > 0) {
+        if (area && area > 0) {
+          Cb_hx = seiderHxCb(inp.hx_head_type, area);
+          FP = 0.9803 + 0.018 * (designPsig / 100) + 0.0017 * Math.pow(designPsig / 100, 2);
+          FM_hx = hxFm(inp.hx_material, area);
+          FL = FL_TABLE[inp.hx_tube_length_ft] != null ? FL_TABLE[inp.hx_tube_length_ft] : 1.00;
+          Cp_hx_unit = Cb_hx === null ? null : Cb_hx * FP * FM_hx * FL * (inp.cepci / 567);
+          BMC_hx_unit = Cp_hx_unit === null ? null : Cp_hx_unit * inp.hx_bmf;
+          BMC_hx_total = BMC_hx_unit === null ? null : coolersQty * BMC_hx_unit;
+        } else { BMC_hx_total = null; }
+      }
+
+      var TBM = (BMC_comp === null || BMC_hx_total === null) ? null : BMC_comp + BMC_hx_total;
+      var contingency = TBM === null ? null : 0.18 * TBM;
+      var fee = TBM === null ? null : 0.03 * TBM;
+      var totalModuleCost = TBM === null ? null : TBM + contingency + fee;
+      var workingCapital = totalModuleCost === null ? null : 0.15 * totalModuleCost;
+      var TCI = totalModuleCost === null ? null : totalModuleCost + workingCapital;
+
+      rows.push({
+        N: N, r_stage: r_stage, H_ad: H_ad, candidates: candidates, primaryType: primaryType,
+        Tout_R: stage.Tout_R, Tout_F: stage.Tout_F, tempFlag: tempFlag, Pc_hp: Pc_hp,
+        TBM: TBM, TCI: TCI
+      });
+    }
+
+    var mar = marFromRisk(inp.risk_level);
+    var pbpRef = 0.85 / (mar + 0.85 / inp.N_eval_years);
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      if (i === 0) { row.incrCapex = null; row.incrPBP = "n/a"; row.passesEcon = false; continue; }
+      var prev = rows[i - 1];
+      row.incrCapex = (row.TCI === null || prev.TCI === null) ? null : row.TCI - prev.TCI;
+      var pretaxSavings = (prev.Pc_hp - row.Pc_hp) * 0.7457 * inp.hours_per_year * inp.elec_cost_kwh;
+      if (row.incrCapex === null) { row.incrPBP = "n/a"; row.passesEcon = false; }
+      else if (row.incrCapex <= 0) { row.incrPBP = "FREE - cheaper capital AND lower operating cost"; row.passesEcon = true; }
+      else {
+        var afterTaxCF = (1 - inp.tax_rate) * pretaxSavings + row.incrCapex / inp.N_eval_years;
+        if (afterTaxCF <= 0) { row.incrPBP = "n/a"; row.passesEcon = false; }
+        else { var pbp = row.incrCapex / afterTaxCF; row.incrPBP = pbp; row.passesEcon = (pbp <= pbpRef) && (pbp <= 5); }
+      }
+    }
+
+    var minFeasibleN = null;
+    for (var N2 = 1; N2 <= 6; N2++) if (!isBlockingFlag(rows[N2 - 1].tempFlag)) { minFeasibleN = N2; break; }
+    var chain = [false, false, false, false, false, false];
+    var recommendedN = null;
+    if (minFeasibleN !== null) {
+      for (var N3 = minFeasibleN; N3 <= 6; N3++) {
+        chain[N3 - 1] = (N3 === minFeasibleN) ? true : (chain[N3 - 2] && rows[N3 - 1].passesEcon);
+        if (chain[N3 - 1]) recommendedN = N3;
+      }
+    }
+    return {
+      rows: rows, mar: mar, pbpRef: pbpRef, minFeasibleN: minFeasibleN, chain: chain, recommendedN: recommendedN,
+      totalProjectCost: recommendedN ? rows[recommendedN - 1].TCI : null,
+      suggestedTypeAtOptimum: recommendedN ? rows[recommendedN - 1].primaryType : null
+    };
+  }
+
+  // ==== DOM wiring ====
+  function $(id) { return document.getElementById(id); }
+  function num(id) { var v = parseFloat($(id).value); return isFinite(v) ? v : 0; }
+  var CTC_UNIT_SYS = 'us';
+  function ctcNumU(id, kind){ var v = num(id); return CTC_UNIT_SYS==='si' ? window.siToUs(kind, v) : v; }
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function showEl(id, show) { $(id).classList.toggle('ctc-hidden', !show); }
+
+  function populateSelect(id, options, selected) {
+    $(id).innerHTML = options.map(function (o) {
+      return '<option value="' + esc(o) + '"' + (o === selected ? ' selected' : '') + '>' + esc(o) + '</option>';
+    }).join('');
+  }
+
+  populateSelect('ctc-gas', ['Custom / Manual Entry'].concat(GAS_LIBRARY.map(function (g) { return g.name; })), 'Custom / Manual Entry');
+  populateSelect('ctc-type-override', ['Auto'].concat(COVERAGE.map(function (c) { return c.type; })), 'Auto');
+  populateSelect('ctc-method-override', ['Auto', 'Empirical Correlation', 'Quick Default', 'Scale-Up', 'Balje', 'Manual'], 'Auto');
+  populateSelect('ctc-risk', RISK_TABLE.map(function (r) { return r.label; }), 'Low - new capacity / established market');
+  populateSelect('ctc-cepci-year', ['Custom / Manual Entry'].concat(Object.keys(CEPCI_TABLE)), 'Custom / Manual Entry');
+  populateSelect('ctc-driver', Object.keys(FD_TABLE), 'Electric Motor');
+  populateSelect('ctc-comp-material', Object.keys(FM_COMP_TABLE), 'Carbon Steel');
+  populateSelect('ctc-hx-head-type', ['Floating Head', 'Fixed Head', 'U-Tube', 'Kettle Vaporizer'], 'Floating Head');
+  populateSelect('ctc-hx-material', Object.keys(FM_HX_TABLE), 'Carbon steel/Carbon steel');
+  populateSelect('ctc-hx-tube-length', ['8', '12', '16', '20'], '20');
+
+  function readInputs() {
+    var gas = $('ctc-gas').value;
+    var gasRow = null;
+    for (var i = 0; i < GAS_LIBRARY.length; i++) if (GAS_LIBRARY[i].name === gas) gasRow = GAS_LIBRARY[i];
+    var mwManual = num('ctc-mw-manual'), kManual = num('ctc-k-manual');
+    var MW = gasRow ? gasRow.mw : mwManual;
+    var k = gasRow ? gasRow.k : kManual;
+
+    var cepciYearRaw = $('ctc-cepci-year').value;
+    var cepciManual = num('ctc-cepci-manual');
+    var cepciYear = (cepciYearRaw === 'Custom / Manual Entry') ? cepciYearRaw : Number(cepciYearRaw);
+    var cepci = (cepciYear === 'Custom / Manual Entry') ? cepciManual : CEPCI_TABLE[cepciYear];
+
+    var nStages = Math.round(num('ctc-nstages'));
+    nStages = Math.min(6, Math.max(1, nStages || 1));
+
+    return {
+      gas: gas, MW: MW, k: k, mw_manual: mwManual, k_manual: kManual,
+      Z: num('ctc-z'), T1_F: ctcNumU('ctc-t1','temp'), P1_psia: ctcNumU('ctc-p1','press'), P2_psia: ctcNumU('ctc-p2','press'),
+      mdot_lbhr: ctcNumU('ctc-mdot','mass_hr'), N_stages: nStages,
+      type_override: $('ctc-type-override').value, method_override: $('ctc-method-override').value,
+      eta_p_manual: num('ctc-eta-manual'),
+      su_eta1: num('ctc-su-eta1'), su_bref: num('ctc-su-bref'), su_fref: num('ctc-su-fref'),
+      su_f1: num('ctc-su-f1'), su_f2: num('ctc-su-f2'),
+      balje_n_rpm: num('ctc-balje-n'), balje_d_ft: ctcNumU('ctc-balje-d','len_ft'), balje_etac: num('ctc-balje-etac'),
+      hours_per_year: num('ctc-hours'), elec_cost_kwh: num('ctc-elec'),
+      risk_level: $('ctc-risk').value, N_eval_years: num('ctc-neval'),
+      cepci_year: cepciYear, cepci_manual: cepciManual, cepci: cepci,
+      driver: $('ctc-driver').value, comp_material: $('ctc-comp-material').value, comp_bmf: num('ctc-comp-bmf'),
+      hx_head_type: $('ctc-hx-head-type').value, hx_material: $('ctc-hx-material').value,
+      hx_tube_length_ft: Number($('ctc-hx-tube-length').value), U_btu: ctcNumU('ctc-u','htc'),
+      cw_in_F: ctcNumU('ctc-cw-in','temp'), cw_out_F: ctcNumU('ctc-cw-out','temp'), hx_bmf: num('ctc-hx-bmf'), tax_rate: num('ctc-tax')
+    };
+  }
+
+  function flagClass(flag) {
+    if (flag.indexOf('OK') === 0) return 'ctc-flag-ok';
+    if (flag.indexOf('CAUTION') === 0) return 'ctc-flag-caution';
+    if (flag.indexOf('EXCEEDS') === 0 || flag.indexOf('UNKNOWN TYPE') === 0) return 'ctc-flag-exceeds';
+    return 'ctc-flag-na';
+  }
+
+  function renderSweep(sweep, currentN) {
+    $('ctc-sweep-body').innerHTML = sweep.rows.map(function (row) {
+      var cls = [];
+      if (row.N === sweep.minFeasibleN) cls.push('ctc-baseline-row');
+      if (row.N === sweep.recommendedN) cls.push('ctc-recommended-row');
+      var pbpDisplay = typeof row.incrPBP === 'number' ? row.incrPBP.toFixed(2) : row.incrPBP;
+      var tciDisplay = row.TCI === null ? 'n/a' : '$' + Math.round(row.TCI).toLocaleString();
+      var passesDisplay = row.N === sweep.minFeasibleN ? 'baseline' : (row.passesEcon ? 'Yes' : 'No');
+      return '<tr class="' + cls.join(' ') + '">' +
+        '<td>' + row.N + '</td>' + '<td>' + row.r_stage.toFixed(3) + '</td>' + '<td>' + row.H_ad.toFixed(0) + '</td>' +
+        '<td>' + esc(row.primaryType) + '</td>' + '<td>' + row.Tout_F.toFixed(1) + '</td>' +
+        '<td class="' + flagClass(row.tempFlag) + '">' + esc(row.tempFlag) + '</td>' +
+        '<td>' + row.Pc_hp.toFixed(1) + '</td>' + '<td>' + tciDisplay + '</td>' +
+        '<td>' + pbpDisplay + '</td>' + '<td>' + passesDisplay + '</td>' + '</tr>';
+    }).join('');
+  }
+
+  function renderOptimizer(sweep, currentN) {
+    var box = $('ctc-optimizer-box'), title = $('ctc-opt-title'), detail = $('ctc-opt-detail'), btn = $('ctc-update-btn');
+    if (sweep.recommendedN === null) {
+      box.className = 'ctc-panel ctc-optimizer mismatch';
+      title.textContent = 'No feasible/economical stage count found within N=1-6';
+      detail.textContent = sweep.minFeasibleN === null
+        ? 'Every stage count from 1 to 6 exceeds the Tallow discharge-temperature limit — this train needs more than 6 stages.'
+        : ('The minimum feasible stage count is N=' + sweep.minFeasibleN + ', but no further stage add-on passes the payback screen.');
+      showEl('ctc-update-btn', false);
+      return;
+    }
+    var costText = 'Total project cost at the optimum: $' + Math.round(sweep.totalProjectCost).toLocaleString() + ' (' + sweep.suggestedTypeAtOptimum + ').';
+    if (sweep.recommendedN === currentN) {
+      box.className = 'ctc-panel ctc-optimizer match';
+      title.textContent = 'Recommended optimal N = ' + sweep.recommendedN + ' — matches your current N_stages';
+      detail.textContent = costText;
+      showEl('ctc-update-btn', false);
+    } else {
+      box.className = 'ctc-panel ctc-optimizer mismatch';
+      title.textContent = 'Recommended optimal N = ' + sweep.recommendedN + ' — you are currently set to N=' + currentN;
+      detail.textContent = costText + ' Update N_stages to see the results panel re-derive at the optimum.';
+      showEl('ctc-update-btn', true);
+      btn.onclick = function () { $('ctc-nstages').value = sweep.recommendedN; render(); };
+    }
+  }
+
+  function render() {
+    var inp = readInputs();
+
+    showEl('ctc-gas-manual-row1', inp.gas === 'Custom / Manual Entry');
+    showEl('ctc-gas-manual-row2', inp.gas === 'Custom / Manual Entry');
+
+    var warnings = [];
+    if (inp.P1_psia <= 0) warnings.push('P1 must be positive.');
+    if (inp.P2_psia <= inp.P1_psia) warnings.push('P2 must exceed P1.');
+    if (inp.T1_F <= -459.67) warnings.push('T1 must be above absolute zero.');
+    if (inp.mdot_lbhr <= 0) warnings.push('Mass flow rate must be positive.');
+    if (inp.MW <= 0) warnings.push('MW must be positive.');
+    if (inp.k <= 1.0) warnings.push('k must be greater than 1.');
+    if (inp.Z <= 0) warnings.push('Z must be positive.');
+
+    var warnBox = $('ctc-warn');
+    if (warnings.length) {
+      warnBox.textContent = 'Input error: ' + warnings.join(' ');
+      showEl('ctc-warn', true);
+      return;
+    }
+    showEl('ctc-warn', false);
+
+    var base = deriveBase(inp);
+    var N = inp.N_stages;
+    var r_stage = rStage(base.r_total, N);
+    var H_ad = hAd(inp.k, base.R_prime, base.T1_R, r_stage);
+    var candidates = suggestChoices(base.Q_ACFM, H_ad);
+    var autoType = candidates[0];
+    var selType = (inp.type_override !== 'Auto') ? inp.type_override : autoType;
+
+    var effRes = resolveEfficiency(inp, selType, r_stage, base.Q_ACFM, H_ad);
+    var n = solveN(inp.k, effRes.etaP);
+
+    $('ctc-auto-type').textContent = candidates.join(', ') + (inp.type_override !== 'Auto' ? '  (overridden → ' + selType + ')' : '');
+    $('ctc-eff-method').textContent = effRes.method + (effRes.note ? ' — ' + effRes.note : '');
+
+    showEl('ctc-manual-eta-block', effRes.method === 'Manual');
+    showEl('ctc-scaleup-block', effRes.method === 'Scale-Up');
+    showEl('ctc-balje-block', effRes.method === 'Balje');
+    if (effRes.method === 'Balje') {
+      var nsds = baljeNsDs(inp.balje_n_rpm, inp.balje_d_ft, base.Q_ACFM, H_ad);
+      $('ctc-balje-nsds').textContent = 'Ns=' + nsds.Ns.toFixed(3) + '  Ds=' + nsds.Ds.toFixed(3);
+    }
+
+    $('ctc-mar-readout').textContent = (marFromRisk(inp.risk_level) * 100).toFixed(1) + '%';
+    $('ctc-cepci-effective').textContent = inp.cepci.toFixed(1);
+
+    $('ctc-result-n').textContent = N;
+    $('ctc-r-q').textContent = base.Q_ACFM.toFixed(1);
+    $('ctc-r-had').textContent = H_ad.toFixed(0);
+    $('ctc-r-type').textContent = selType;
+
+    if (n === null) {
+      $('ctc-r-eta').textContent = 'n/a';
+      $('ctc-r-n').textContent = 'n/a';
+      $('ctc-r-tout').textContent = 'n/a';
+      $('ctc-r-flag').textContent = 'n/a';
+      $('ctc-r-flag').className = 'ctc-m-val ctc-flag-na';
+      $('ctc-r-trainhp').textContent = 'n/a';
+      $('ctc-r-stagehp').textContent = 'n/a';
+      $('ctc-sweep-body').innerHTML = '';
+      $('ctc-opt-title').textContent = 'Sweep unavailable';
+      $('ctc-opt-detail').textContent = 'Selected efficiency method returned no numeric value at this N — fix the method/override on the left before the optimizer can run.';
+      showEl('ctc-update-btn', false);
+      return;
+    }
+
+    var stage = perStage(base, inp.k, effRes.etaP, n, r_stage, inp.mdot_lbhr, inp.Z);
+    $('ctc-r-eta').textContent = (effRes.etaP * 100).toFixed(1) + '%';
+    $('ctc-r-n').textContent = n.toFixed(4);
+    $('ctc-r-tout').textContent = stage.Tout_F.toFixed(1);
+    var flag = tallowFlag(selType, stage.Tout_F);
+    $('ctc-r-flag').textContent = flag;
+    $('ctc-r-flag').className = 'ctc-m-val ' + flagClass(flag);
+    $('ctc-r-trainhp').textContent = (stage.Pgas_hp * N).toFixed(1);
+    $('ctc-r-stagehp').textContent = stage.Pgas_hp.toFixed(1);
+
+    var sweep = sweepStageCounts(inp, base, effRes.etaP, n);
+    renderSweep(sweep, N);
+    renderOptimizer(sweep, N);
+
+    window.__ctcLastInputs = inp; // stashed for the download handler
+  }
+
+  document.getElementById('ctc-toggle-adv').addEventListener('click', function () {
+    var panel = $('ctc-advanced-panel');
+    var hidden = panel.classList.toggle('ctc-hidden');
+    this.textContent = hidden ? 'Show advanced cost & sizing basis ▾' : 'Hide advanced cost & sizing basis ▴';
+  });
+
+  document.querySelectorAll('#ctc-tool input, #ctc-tool select').forEach(function (el) {
+    el.addEventListener('input', render);
+    el.addEventListener('change', render);
+  });
+
+  render();
+
+  // ---- units (subscribes to the site-wide toggle) ----
+  var CTC_KIND = { 't1':'temp', 'p1':'press', 'p2':'press', 'mdot':'mass_hr', 'balje-d':'len_ft',
+                    'u':'htc', 'cw-in':'temp', 'cw-out':'temp' };
+  var CTC_LABELS = {
+    't1':{us:'Suction temperature, T1 (°F)', si:'Suction temperature, T1 (°C)'},
+    'p1':{us:'Suction pressure, P1 (psia)', si:'Suction pressure, P1 (kPa)'},
+    'p2':{us:'Final discharge pressure, P2 (psia)', si:'Final discharge pressure, P2 (kPa)'},
+    'mdot':{us:'Mass flow rate, ṁ (lb/hr)', si:'Mass flow rate, ṁ (kg/hr)'},
+    'balje-d':{us:'Impeller diameter, D (ft)', si:'Impeller diameter, D (m)'},
+    'u':{us:'Overall U (Btu/hr·ft²·°F)', si:'Overall U (W/m²·K)'},
+    'cw-in':{us:'Cooling water in (°F)', si:'Cooling water in (°C)'},
+    'cw-out':{us:'Cooling water out (°F)', si:'Cooling water out (°C)'},
+  };
+  var CTC_LBL_ELS = {};
+  (function(){
+    var spans = document.querySelectorAll('#ctc-tool .ctc-lbl');
+    var keys = Object.keys(CTC_LABELS);
+    spans.forEach(function(span){
+      for(var k of keys){ if(span.textContent === CTC_LABELS[k].us){ CTC_LBL_ELS[k] = span; break; } }
+    });
+  })();
+  function ctcApplyUnits(sys){
+    if(sys === CTC_UNIT_SYS) return;
+    var oldSys = CTC_UNIT_SYS;
+    Object.keys(CTC_KIND).forEach(function(id){
+      var kind = CTC_KIND[id];
+      var el = $('ctc-'+id);
+      if(!el) return;
+      var convert = function(v){ return oldSys==='us' ? window.usToSi(kind,v) : window.siToUs(kind,v); };
+      el.value = Math.round(convert(parseFloat(el.value))*1000)/1000;
+      if(CTC_LBL_ELS[id]) CTC_LBL_ELS[id].textContent = CTC_LABELS[id][sys];
+    });
+    CTC_UNIT_SYS = sys;
+    render();
+  }
+  window.addEventListener('site-units-change', function(e){ ctcApplyUnits(e.detail.sys); });
+
+  // ==== Download: patch only the input cells' raw XML inside the .xlsx zip ====
+  // SheetJS's free/community build can only READ cell styles, not write them back —
+  // round-tripping the whole workbook through it silently strips every fill/font/border
+  // in the file, not just the edited cells. An .xlsx is just a zip of XML parts, so
+  // instead we open the zip with JSZip, edit only the <c> elements for the mapped input
+  // cells directly in the target sheet's XML (value + type only — leaving each cell's
+  // existing style index and every other part of the zip byte-identical), and re-zip.
+  var SSML_NS = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+  var CTC_CELL_MAP = null;
+  fetch('assets/compressor_input_cell_map.json').then(function (r) { return r.json(); }).then(function (m) { CTC_CELL_MAP = m; })
+    .catch(function () { /* download button will report the failure on click */ });
+
+  function ctcFindSheetPath(zip, sheetName) {
+    return zip.file('xl/workbook.xml').async('string').then(function (wbXml) {
+      var wbDoc = new DOMParser().parseFromString(wbXml, 'application/xml');
+      var sheets = wbDoc.getElementsByTagName('sheet');
+      var rId = null;
+      for (var i = 0; i < sheets.length; i++) {
+        if (sheets[i].getAttribute('name') === sheetName) { rId = sheets[i].getAttribute('r:id'); break; }
+      }
+      if (!rId) throw new Error('sheet "' + sheetName + '" not found in workbook.xml');
+      return zip.file('xl/_rels/workbook.xml.rels').async('string').then(function (relsXml) {
+        var relsDoc = new DOMParser().parseFromString(relsXml, 'application/xml');
+        var rels = relsDoc.getElementsByTagName('Relationship');
+        for (var j = 0; j < rels.length; j++) {
+          if (rels[j].getAttribute('Id') === rId) {
+            var target = rels[j].getAttribute('Target');
+            return target.charAt(0) === '/' ? target.slice(1) : 'xl/' + target;
+          }
+        }
+        throw new Error('relationship ' + rId + ' not found');
+      });
+    });
+  }
+
+  function ctcPatchCell(cEl, doc, value) {
+    while (cEl.firstChild) cEl.removeChild(cEl.firstChild);
+    if (typeof value === 'number' && isFinite(value)) {
+      cEl.removeAttribute('t');
+      var v = doc.createElementNS(SSML_NS, 'v');
+      v.textContent = String(value);
+      cEl.appendChild(v);
+    } else {
+      cEl.setAttribute('t', 'inlineStr');
+      var is = doc.createElementNS(SSML_NS, 'is');
+      var t = doc.createElementNS(SSML_NS, 't');
+      t.textContent = String(value);
+      is.appendChild(t);
+      cEl.appendChild(is);
+    }
+  }
+
+  document.getElementById('ctc-download-btn').addEventListener('click', function () {
+    var btn = this, status = $('ctc-download-status');
+    if (!CTC_CELL_MAP) { status.textContent = 'Cell map still loading — try again in a moment.'; return; }
+    var inp = window.__ctcLastInputs || readInputs();
+    btn.disabled = true;
+    status.textContent = 'Building your personalized workbook…';
+
+    var writes = {
+      Z: inp.Z, gas: inp.gas, mw_manual: inp.mw_manual, k_manual: inp.k_manual,
+      T1_F: inp.T1_F, P1_psia: inp.P1_psia, P2_psia: inp.P2_psia, mdot_lbhr: inp.mdot_lbhr, N_stages: inp.N_stages,
+      hours_per_year: inp.hours_per_year, elec_cost_kwh: inp.elec_cost_kwh, risk_level: inp.risk_level, N_eval_years: inp.N_eval_years,
+      type_override: inp.type_override, method_override: inp.method_override, eta_p_manual: inp.eta_p_manual,
+      su_eta1: inp.su_eta1, su_bref: inp.su_bref, su_fref: inp.su_fref, su_f1: inp.su_f1, su_f2: inp.su_f2,
+      balje_n_rpm: inp.balje_n_rpm, balje_d_ft: inp.balje_d_ft, balje_etac: inp.balje_etac,
+      cepci_year: inp.cepci_year, cepci_manual: inp.cepci_manual,
+      driver: inp.driver, comp_material: inp.comp_material, comp_bmf: inp.comp_bmf,
+      hx_head_type: inp.hx_head_type, hx_material: inp.hx_material, hx_tube_length_ft: inp.hx_tube_length_ft,
+      U_btu: inp.U_btu, cw_in_F: inp.cw_in_F, cw_out_F: inp.cw_out_F, hx_bmf: inp.hx_bmf, tax_rate: inp.tax_rate
+    };
+    // group writes by target sheet name, since each sheet's XML is patched as one unit
+    var bySheet = {};
+    Object.keys(writes).forEach(function (name) {
+      var ref = CTC_CELL_MAP[name];
+      if (!ref) return;
+      var bang = ref.indexOf('!');
+      var sheetName = ref.slice(0, bang), cellAddr = ref.slice(bang + 1);
+      (bySheet[sheetName] = bySheet[sheetName] || []).push({ cellAddr: cellAddr, value: writes[name] });
+    });
+
+    fetch('assets/Compressor Train Sizing.xlsx').then(function (r) {
+      if (!r.ok) throw new Error('template fetch failed (' + r.status + ')');
+      return r.arrayBuffer();
+    }).then(function (buf) {
+      return JSZip.loadAsync(buf);
+    }).then(function (zip) {
+      var sheetNames = Object.keys(bySheet);
+      return sheetNames.reduce(function (chain, sheetName) {
+        return chain.then(function () {
+          return ctcFindSheetPath(zip, sheetName).then(function (sheetPath) {
+            return zip.file(sheetPath).async('string').then(function (xmlText) {
+              var doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+              var perr = doc.getElementsByTagName('parsererror');
+              if (perr.length) throw new Error('failed to parse ' + sheetPath);
+              var cEls = doc.getElementsByTagName('c');
+              bySheet[sheetName].forEach(function (w) {
+                var target = null;
+                for (var i = 0; i < cEls.length; i++) {
+                  if (cEls[i].getAttribute('r') === w.cellAddr) { target = cEls[i]; break; }
+                }
+                if (!target) return; // shouldn't happen — cell map is generated from this same template
+                ctcPatchCell(target, doc, w.value);
+              });
+              var xmlOut = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' + new XMLSerializer().serializeToString(doc);
+              zip.file(sheetPath, xmlOut);
+            });
+          });
+        });
+      }, Promise.resolve()).then(function () { return zip; });
+    }).then(function (zip) {
+      return zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    }).then(function (blob) {
+      var gasSlug = (inp.gas || 'gas').replace(/[^a-z0-9]+/gi, '-');
+      var ts = new Date().toISOString().replace(/[:T]/g, '-').slice(0, 16);
+      var fname = 'Compressor Train Sizing - ' + gasSlug + '-' + inp.N_stages + 'stage-' + ts + '.xlsx';
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = fname;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      status.textContent = 'Downloaded ' + fname;
+      btn.disabled = false;
+    }).catch(function (err) {
+      status.textContent = 'Download failed: ' + err.message;
+      btn.disabled = false;
+    });
+  });
+
+        })();
+        </script>
+
+      </div>
+    </details>
+  </div>
+</section>
+</body>
+</html>
