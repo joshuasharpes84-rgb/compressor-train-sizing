@@ -6,6 +6,11 @@ temperature, head, and power per stage, then **sweeps 1–6 stages and recommend
 count**. Each stage count is costed for the compressor plus its intercoolers, with a payback screen on the
 power saved. The tool can also download a copy of the full Excel workbook, pre-filled with your inputs.
 
+> **Make it yours, free:** download this repo (**Code → Download ZIP**, or `git clone`), open the folder in
+> VS Code or any editor, and extend it for your own case with your AI assistant. This README is written for
+> both of you. Taking these tools further is a free service of
+> [Sharpes Process Engineering](https://jsharpes-portfolio.netlify.app); the site's Ask box can point you to the right starting file.
+
 - **Live tool:** https://jsharpes-portfolio.netlify.app (Interactive Calculations → Compressor Train Sizing)
 - **Run it locally:** download this repo, then serve the folder (`npx serve .` or `python -m http.server`)
   and open `index.html`. The spreadsheet download fetches files under `assets/`, which browsers block

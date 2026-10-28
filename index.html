@@ -402,6 +402,74 @@
         <div id="ctc-tool">
           <p class="ctc-subtitle">Sizes a multi-stage compressor train (equal pressure ratio per stage, full intercooling back to suction temperature) from Compressor Selection/Sizing methodology — auto-suggests type and efficiency method from your process conditions, then sweeps N = 1-6 stages to recommend the economically optimal stage count (Seider Ch. 16.5 equipment costing + Peters &amp; Timmerhaus payback screen). Change any input and every result recomputes live. See the <a href="slides/compressor-selection/" target="_blank" rel="noopener">Compressor Selection</a>, <a href="slides/compressor-sizing/" target="_blank" rel="noopener">Compressor Train Sizing</a>, and <a href="slides/perrys-compressors/" target="_blank" rel="noopener">Perry's Compressors</a> presentations for the underlying method.</p>
 
+          <!-- Sources panel (portfolio rule 2026-10-27): kept in step with Compressor Train\SOURCES.md; thumbnails = assets/source-thumbs/ from Not on Website/source_thumbs/build_source_thumbs.py -->
+          <div id="ctc-srcwrap">
+          <style>
+          #ctc-srcwrap{margin:0 0 16px}
+          #ctc-srcwrap details.srcs{--sp-bg:var(--white);--sp-bg2:var(--bg);--sp-line:var(--border);--sp-muted:var(--muted);--sp-ink:var(--navy);--sp-acc:var(--blue);display:block;margin:0;padding:0;border:1px solid var(--sp-line);border-radius:8px;background:var(--sp-bg);box-shadow:none;text-align:left}
+          #ctc-srcwrap details.srcs>summary{list-style:none;display:flex;align-items:center;gap:8px;cursor:pointer;margin:0;padding:8px 12px;background:none;border:0;border-radius:8px;box-shadow:none;position:static;font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--sp-muted);user-select:none}
+          #ctc-srcwrap details.srcs>summary::-webkit-details-marker{display:none}
+          #ctc-srcwrap details.srcs>summary::marker{content:""}
+          #ctc-srcwrap details.srcs>summary::before{content:"\25B8";color:var(--sp-acc);width:12px}
+          #ctc-srcwrap details.srcs[open]>summary::before{content:"\25BE"}
+          #ctc-srcwrap details.srcs>summary:hover{background:none;color:var(--sp-acc)}
+          #ctc-srcwrap details.srcs .srcnote{margin:0;padding:0 12px 8px;font-size:12px;line-height:1.45;color:var(--sp-muted);font-style:normal}
+          #ctc-srcwrap details.srcs .srcgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;margin:0;padding:0 12px 12px}
+          #ctc-srcwrap details.srcs .src{display:grid;grid-template-columns:52px minmax(0,1fr);gap:10px;align-items:start;margin:0;padding:8px;background:var(--sp-bg);border:1px solid var(--sp-line);border-radius:6px;color:var(--sp-ink);text-decoration:none;box-shadow:none;transform:none}
+          #ctc-srcwrap details.srcs a.src:hover{border-color:var(--sp-acc)}
+          #ctc-srcwrap details.srcs .src img,#ctc-srcwrap details.srcs .src .ico{display:block;width:52px;height:68px;margin:0;padding:0;object-fit:cover;object-position:top;border:1px solid var(--sp-line);border-radius:3px;background:var(--sp-bg2)}
+          #ctc-srcwrap details.srcs .src img.wide,#ctc-srcwrap details.srcs .src .ico.wide{height:30px}
+          #ctc-srcwrap details.srcs .src .ico{display:grid;place-items:center;font-size:9px;font-weight:700;letter-spacing:.04em;color:var(--sp-muted)}
+          #ctc-srcwrap details.srcs .src b{display:block;margin:0;font-size:13px;line-height:1.25;font-weight:600;color:var(--sp-ink)}
+          #ctc-srcwrap details.srcs .src .w{display:block;margin:2px 0 0;font-size:11.5px;line-height:1.35;color:var(--sp-muted)}
+          #ctc-srcwrap details.srcs .src .k{display:block;margin:0 0 2px;font-style:normal;font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--sp-acc)}
+          #ctc-srcwrap details.srcs .src .k.off{color:var(--sp-muted)}
+          @media (max-width:560px){#ctc-srcwrap details.srcs .srcgrid{grid-template-columns:minmax(0,1fr)}}
+          </style>
+          <details class="srcs">
+            <summary>Sources behind this tool <span id="ctc-srccount"></span></summary>
+            <p class="srcnote">Decks and tools open on this site in a new tab. Books, papers and methods are cited, not linked. Detail by topic: SOURCES.md in the Method &amp; code repo.</p>
+            <div class="srcgrid" id="ctc-srcgrid"></div>
+          </details>
+          <script>
+          (function () {
+            var TH = window.SRC_THUMB_BASE || 'assets/source-thumbs/';
+            var SOURCES = [
+              ["deck-compsel", "deck", "Compressor Selection", "Type selection: coverage map (Perry's Fig. 10-64) and service ranges by type", "https://jsharpes-portfolio.netlify.app/slides/compressor-selection/"],
+              ["deck-compsize", "deck", "Compressor Train Sizing", "Polytropic head and n, allowable discharge temperature by type, digitized efficiency curves", "https://jsharpes-portfolio.netlify.app/slides/compressor-sizing/"],
+              ["deck-perrycomp", "deck", "Perry's Compressors (notes)", "Perry's Sec. 10 compressor notes, linked from this tool as method background", "https://jsharpes-portfolio.netlify.app/slides/perrys-compressors/"],
+              ["perry9", "book", "Perry's Chemical Engineers' Handbook, Sec. 10", "Fig. 10-64 compressor coverage; Fig. 10-54 polytropic curves", null],
+              [null, "book", "Cheremisinoff, Condensed Encyclopedia of Process Equipment (Gulf, 2000)", "Compressor types and service ranges in the selection deck (print copy)", null],
+              ["seider", "book", "Seider et al., Product and Process Design Principles, Ch. 16–17", "Compressor and intercooler purchase cost (Eq. 16.36–16.45, Table 16.25); cooling-water basis; cash-flow definitions", null],
+              ["peters", "book", "Peters, Timmerhaus &amp; West, Plant Design and Economics, Ch. 8", "Payback period and minimum acceptable return (Table 8-1, Eq. 8-2a/8-2c)", null],
+              [null, "paper", "Casey &amp; Robinson", "Scale-up efficiency correlation (cited in the sizing deck)", null],
+              [null, "paper", "Balje", "Specific speed / specific diameter (N<sub>s</sub>–D<sub>s</sub>) chart (cited in the deck; chart not held)", null],
+              [null, "data", "CEPCI annual averages 2001–2024", "Chemical Engineering magazine plant cost index (via toweringskills.com) for escalation", null],
+              [null, "data", "US federal corporate tax rate, 21 %", "Post-2017 TCJA rate; Texas has no state corporate income tax", null]
+            ];
+            var grid = document.getElementById('ctc-srcgrid');
+            if (!grid) return;
+            document.getElementById('ctc-srccount').textContent = '\u00b7 ' + SOURCES.length;
+            grid.innerHTML = SOURCES.map(function (s) {
+              var kind = s[1], wide = kind === 'deck' ? ' wide' : '';
+              var linkable = kind === 'deck' || kind === 'tool', url = linkable ? s[4] : null, off = linkable && !url;
+              var img = s[0] ? '<img src="' + TH + s[0] + '.jpg" alt="" loading="lazy" class="' + wide.trim() + '" data-kind="' + kind + '">'
+                             : '<span class="ico' + wide + '">' + kind.toUpperCase() + '</span>';
+              var inner = img + '<div><i class="k' + (off ? ' off' : '') + '">' + kind + (off ? ' \u00b7 not on the site yet' : '') + '</i><b>' +
+                          s[2] + (url ? ' \u2197' : '') + '</b><span class="w">' + s[3] + '</span></div>';
+              return url ? '<a class="src" href="' + url + '" target="_blank" rel="noopener">' + inner + '</a>' : '<div class="src">' + inner + '</div>';
+            }).join('');
+            Array.prototype.forEach.call(grid.querySelectorAll('img'), function (im) {
+              im.addEventListener('error', function () {
+                var sp = document.createElement('span'), k = im.getAttribute('data-kind');
+                sp.className = 'ico' + (k === 'deck' ? ' wide' : ''); sp.textContent = k.toUpperCase();
+                im.parentNode.replaceChild(sp, im);
+              });
+            });
+          })();
+          </script>
+          </div>
+
           <div class="ctc-layout">
 
             <!-- LEFT: inputs -->
